@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import {Test, console} from "forge-std/Test.sol";
-import {PoolFactory} from "../../src/PoolFactory.sol";
-import {ERC20Mock} from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
+import { Test, console } from "forge-std/Test.sol";
+import { PoolFactory } from "../../src/PoolFactory.sol";
+import { ERC20Mock } from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 
 contract PoolFactoryTest is Test {
     PoolFactory factory;
