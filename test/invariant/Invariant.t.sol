@@ -30,7 +30,6 @@ contract Invariant is StdInvariant, Test {
         selectors[1] = TSwapPoolHandler.deposit.selector;
 
         targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
-
         targetContract(address(handler));
     }
 

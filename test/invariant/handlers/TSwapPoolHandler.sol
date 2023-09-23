@@ -81,11 +81,4 @@ contract TSwapPoolHandler is Test {
         pool.deposit(liquidityAmount, 0, type(uint64).max, block.timestamp);
         vm.stopPrank();
     }
-
-    // Helper functions
-    function _addLiquidityIfNotEnoughExists() private {
-        if (weth.balanceOf(address(pool)) == 0 || tokenA.balanceOf(address(pool)) == 0) {
-            deposit(DEFAULT_LIQUIDITY_AMOUNT);
-        }
-    }
 }
