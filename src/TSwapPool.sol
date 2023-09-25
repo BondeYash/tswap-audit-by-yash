@@ -322,7 +322,7 @@ contract TSwapPool is ERC20 {
         revertIfZero(minWeth)
         returns (uint256 wethBought)
     {
-        wethBought = getOutputAmountBasedOnInput(
+        wethBought = getInputAmountBasedOnOutput(
             poolTokenAmount, i_poolToken.balanceOf(address(this)), WETH_TOKEN.balanceOf(address(this))
         );
         if (wethBought < minWeth) {

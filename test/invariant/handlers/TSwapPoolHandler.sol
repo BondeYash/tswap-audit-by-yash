@@ -7,8 +7,8 @@ import { ERC20Mock } from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
 
 contract TSwapPoolHandler is Test {
     TSwapPool pool;
-    ERC20Mock tokenA;
     ERC20Mock weth;
+    ERC20Mock tokenA;
 
     int256 public deltaX;
 

@@ -48,7 +48,7 @@ contract Invariant is StdInvariant, Test {
     // γ = (1 - p) (pronounced gamma)
     // ∆x = (β/(1-β)) * (1/γ) * x
     // ∆y = (αγ/1+αγ) * y
-    function statefulFuzz_testConstantProduct() public {
+    function invariant_testConstantProduct() public {
         assertEq(handler.deltaX(), 0);
     }
 }

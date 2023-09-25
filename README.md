@@ -2,7 +2,6 @@
 
 *This codebase is based loosely on [Uniswap v1](https://github.com/Uniswap/v1-contracts/tree/master)*
 
-
 - [TSwap](#tswap)
 - [Getting Started](#getting-started)
   - [Requirements](#requirements)
