@@ -26,7 +26,7 @@
 ```
 git clone https://github.com/Cyfrin/5-t-swap-audit
 cd 5-t-swap-audit
-make install
+make 
 ```
 
 ### Optional Gitpod
