@@ -9,7 +9,6 @@ contract PoolFactoryTest is Test {
     PoolFactory factory;
     ERC20Mock tokenA;
     ERC20Mock tokenB;
-    ERC20Mock WETH;
 
     function setUp() public {
         factory = new PoolFactory();

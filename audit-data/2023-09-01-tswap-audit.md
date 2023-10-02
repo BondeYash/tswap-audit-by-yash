@@ -85,28 +85,19 @@ The YOUR_NAME_HERE team makes all effort to find as many vulnerabilities in the 
 ## Scope 
 
 ```
-#-- interfaces
-|   #-- IFlashLoanReceiver.sol
-|   #-- IPoolFactory.sol
-|   #-- ITSwapPool.sol
-|   #-- IThunderLoan.sol
-#-- protocol
-|   #-- AssetToken.sol
-|   #-- OracleUpgradeable.sol
-|   #-- ThunderLoan.sol
-#-- upgradedProtocol
-    #-- ThunderLoanUpgraded.sol
+#-- src
+|   #-- PoolFactory.sol
+|   #-- TSwapPool.sol
 ```
 
 # Protocol Summary 
 
-Puppy Rafle is a protocol dedicated to raffling off puppy NFTs with variying rarities. A portion of entrance fees go to the winner, and a fee is taken by another address decided by the protocol owner. 
+TSWAP is an constant-product AMM that allows users permissionlessly trade WETH and any other ERC20 token set during deployment. Users can trade without restrictions, just paying a tiny fee in each swapping operation. Fees are earned by liquidity providers, who can deposit and withdraw liquidity at any time.
 
 ## Roles
 
-- Owner: The owner of the protocol who has the power to upgrade the implementation. 
-- Liquidity Provider: A user who deposits assets into the protocol to earn interest. 
-- User: A user who takes out flash loans from the protocol.
+- Liquidity Provider: An account who deposits assets into the pool to earn trading fees. 
+- User: An account who swaps tokens.
 
 # Executive Summary
 
@@ -116,41 +107,76 @@ Puppy Rafle is a protocol dedicated to raffling off puppy NFTs with variying rar
 | -------- | ---------------------- |
 | High     | 2                      |
 | Medium   | 2                      |
-| Low      | 3                      |
-| Info     | 1                      |
-| Gas      | 2                      |
-| Total    | 10                     |
+| Low      | 2                      |
+| Info     | 0                      |
+| Gas      | 0                      |
+| Total    | 5                      |
 
 # Findings
 
 ## High 
 
-### [H-1] `swapPoolTokenForWethBasedOnInputPoolToken` calculates `wethBought` backwards 
+### [H-1] The `sellPoolTokens` function miscalculates amount of tokens bought
+
+The `sellPoolTokens` is intended to allow users easily sell pool tokens and receive WETH in exchange. Users indicate how many pool tokens they're willing to sell using the `poolTokenAmount` parameter. However, the function currently miscalculates the swapped amount.
+
+This is due to the fact that the `swapExactOutput` function is called, whereas the `swapExactInput` is the one that should be called. Because users specify the exact amount of input tokens - not output tokens.
+
+Consider making the following change to the `sellPoolTokens` function:
 
 ```diff
-    function swapPoolTokenForWethBasedOnInputPoolToken(
-        uint256 poolTokenAmount,
-        uint256 minWeth,
-        uint256 deadline
-    )
-        external
-        revertIfDeadlinePassed(deadline)
-        revertIfZero(poolTokenAmount)
-        revertIfZero(minWeth)
-        returns (uint256 wethBought)
-    {
--       wethBought = getInputAmountBasedOnOutput(
--           poolTokenAmount, i_poolToken.balanceOf(address(this)), WETH_TOKEN.balanceOf(address(this))
--       );
-+       wethBought = getOutputAmountBasedOnInput(
-+           poolTokenAmount, i_poolToken.balanceOf(address(this)), WETH_TOKEN.balanceOf(address(this))
-+       );
-        if (wethBought < minWeth) {
-            revert TSwapPool__WethToReceiveTooLow(wethBought);
-        }
-        _swapPoolTokensForWeth(poolTokenAmount, wethBought);
+    function sellPoolTokens(uint256 poolTokenAmount) external returns (uint256 wethAmount) {
+-       return swapExactOutput(
++       return swapExactInput(
+            i_poolToken,
+            poolTokenAmount,
+            WETH_TOKEN,
+            0,
+            uint64(block.timestamp)
+        );
     }
 ```
 
+### [H-2] Flawed invariant calculation may allow stealing funds
+
+## Medium
+
 ### [M-1] Rebase, fee-on-transfer, and centralized ERC20s can break core invariant 
+
+### [M-2] Missing deadline check when adding liquidity
+
+The `deposit` function accepts a `deadline` parameter, which according to documentation is "The deadline for the transaction to be completed by". However, this parameter is never used. As a consequence, operations that add liquidity to the pool might be executed at unexpected times, in market conditions where the deposit rate is unfavorable for the caller.
+
+Consider making the following change to the `deposit` function:
+
+```diff
+    function deposit(
+        uint256 wethToDeposit,
+        uint256 minimumLiquidityTokensToMint,
+        uint256 maximumPoolTokensToDeposit,
+        uint64 deadline
+    )
+        external
+        revertIfZero(wethToDeposit)
++       revertIfDeadlinePassed(deadline)
+        returns (uint256 liquidityTokensToMint)
+    {
+```
+
+## Low
+
+### [L-1] Wrong values logged in `LiquidityAdded` event
+
+When the `LiquidityAdded` event is emitted in the `_addLiquidityMintAndTransfer` function, it logs values in an incorrect order. The `poolTokensToDeposit` value should go in the third place, whereas the `wethToDeposit` value should go second.
+
+```diff
+- emit LiquidityAdded(msg.sender, poolTokensToDeposit, wethToDeposit);
++ emit LiquidityAdded(msg.sender, wethToDeposit, poolTokensToDeposit);
+```
+
+### [L-2] Swapping function returns default value
+
+The `swapExactInput` function is expected to return the actual amount of tokens bought by the caller. However, while it declares the named return value `output`, it never assigns a value to it, nor uses an explicit `return` statement.
+
+As a result, the function will always return zero. Consider modifying the function so that it always return the correct amount of tokens bought by the caller.
 

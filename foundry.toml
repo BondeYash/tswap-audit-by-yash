@@ -6,7 +6,7 @@ solc = "0.8.18"
 remappings = ['@openzeppelin/contracts=lib/openzeppelin-contracts/contracts']
 
 [invariant]
-runs = 32
+runs = 64
 depth = 32
 fail_on_revert = true
 
