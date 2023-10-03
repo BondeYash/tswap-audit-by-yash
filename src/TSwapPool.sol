@@ -263,10 +263,8 @@ contract TSwapPool is ERC20 {
 
         _swapAndVerify(
             inputToken,
-            inputReserves,
             inputAmount,
             outputToken,
-            outputReserves,
             outputAmount
         );
     }
@@ -289,10 +287,8 @@ contract TSwapPool is ERC20 {
 
         _swapAndVerify(
             inputToken,
-            inputReserves,
             inputAmount,
             outputToken,
-            outputReserves,
             outputAmount
         );
     }
@@ -315,18 +311,14 @@ contract TSwapPool is ERC20 {
      * @notice Swaps a given amount of input for a given amount of output tokens.
      * @dev Checks core invariant of the contract. Beware of modifying this function.
      * @param inputToken ERC20 token to pull from caller
-     * @param inputReserves Reserves of the input token before executing the swap
      * @param inputAmount Amount of tokens to pull from caller
      * @param outputToken ERC20 token to send to caller
-     * @param outputReserves Reserves of the output token before executing the swap
      * @param outputAmount Amount of tokens to send to caller
      */
     function _swapAndVerify(
         IERC20 inputToken,
-        uint256 inputReserves,
         uint256 inputAmount,
         IERC20 outputToken,
-        uint256 outputReserves,
         uint256 outputAmount
     )
         private

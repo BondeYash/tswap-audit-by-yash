@@ -105,8 +105,8 @@ TSWAP is an constant-product AMM that allows users permissionlessly trade WETH a
 
 | Severity | Number of issues found |
 | -------- | ---------------------- |
-| High     | 3                      |
-| Medium   | 2                      |
+| High     | 2                      |
+| Medium   | 3                      |
 | Low      | 2                      |
 | Info     | 0                      |
 | Gas      | 0                      |
@@ -142,11 +142,80 @@ Consider changing the implementation to use the `swapExactInput` function. Note 
 
 ### [H-2] Protocol may take too many tokens from users during swap
 
-A flaw in `getInputAmountBasedOnOutput`, where 10000 should be 1000. This miscalulates amount of tokens to be deposited by user. Combined with the lack of slippage protection, this would put users at risk of having their funds taken by liquidity providers.
+The `getInputAmountBasedOnOutput` function is intended to calculate the amount of tokens a user should deposit given an amount of output tokens. However, the function currently miscalculates the resulting amount. When calculating the fee, it scales the amount by 10000 instead of 1000.
 
-### [H-3] Lack of slippage protection in `swapExactOutput` function
+```diff
+function getInputAmountBasedOnOutput(
+        uint256 outputAmount,
+        uint256 inputReserves,
+        uint256 outputReserves
+    )
+        public
+        pure
+        revertIfZero(outputAmount)
+        revertIfZero(outputReserves)
+        returns (uint256 inputAmount)
+    {
+-       return (inputReserves * outputAmount * 10000) / ((outputReserves - outputAmount) * 997);
++       return (inputReserves * outputAmount * 1000) / ((outputReserves - outputAmount) * 997);
+    }
+```
 
-Does not include nor check a `maxInputAmount` parameter.
+As a result, users swapping tokens via the `swapExactOutput` function will pay far more tokens than expected for their trades. This becomes particularly risky for users that provide infinite allowance to the `TSwapPool` contract. Moreover, note that the issue is worsened by the fact that the `swapExactOutput` function does not allow users to specify a maximum of input tokens, as is described in another issue in this report. 
+
+It's worth noting that the tokens paid by users are not lost, but rather can be swiftly taken by liquidity providers. Therefore, this contract could be used to trick users, have them swap their funds at unfavorable rates and finally rug pull all liquidity from the pool.
+
+To test this, include the following code in the `TSwapPool.t.sol` file:
+
+```javascript
+function testFlawedSwapExactOutput() public {
+    uint256 initialLiquidity = 100e18;
+    vm.startPrank(liquidityProvider);
+    weth.approve(address(pool), initialLiquidity);
+    poolToken.approve(address(pool), initialLiquidity);
+
+    pool.deposit({
+        wethToDeposit: initialLiquidity,
+        minimumLiquidityTokensToMint: 0,
+        maximumPoolTokensToDeposit: initialLiquidity,
+        deadline: uint64(block.timestamp)
+    });
+    vm.stopPrank();
+
+    // User has 11 pool tokens
+    address someUser = makeAddr("someUser");
+    uint256 userInitialPoolTokenBalance = 11e18;
+    poolToken.mint(someUser, userInitialPoolTokenBalance);
+    vm.startPrank(someUser);
+    
+    // Users buys 1 WETH from the pool, paying with pool tokens
+    poolToken.approve(address(pool), type(uint256).max);
+    pool.swapExactOutput(
+        poolToken,
+        weth,
+        1 ether,
+        uint64(block.timestamp)
+    );
+
+    // Initial liquidity was 1:1, so user should have paid ~1 pool token
+    // However, it spent much more than that. The user started with 11 tokens, and now only has less than 1.
+    assertLt(poolToken.balanceOf(someUser), 1 ether);
+    vm.stopPrank();
+
+    // The liquidity provider can rug all funds from the pool now,
+    // including those deposited by user.
+    vm.startPrank(liquidityProvider);
+    pool.withdraw(
+        pool.balanceOf(liquidityProvider),
+        1, // minWethToWithdraw
+        1, // minPoolTokensToWithdraw
+        uint64(block.timestamp)
+    );
+
+    assertEq(weth.balanceOf(address(pool)), 0);
+    assertEq(poolToken.balanceOf(address(pool)), 0);
+}
+```
 
 ## Medium
 
@@ -170,6 +239,41 @@ Consider making the following change to the `deposit` function:
 +       revertIfDeadlinePassed(deadline)
         returns (uint256 liquidityTokensToMint)
     {
+```
+
+### [M-3] Lack of slippage protection in `swapExactOutput` function
+
+The `swapExactOutput` function does not include any sort of slippage protection to protect user funds that swap tokens in the pool. Similar to what is done in the `swapExactInput` function, it should include a parameter (e.g., `maxInputAmount`) that allows callers to specify the maximum amount of tokens they're willing to pay in their trades.
+
+```diff
+function swapExactOutput(
+    IERC20 inputToken,
++   uint256 maxInputAmount    
+    IERC20 outputToken,
+    uint256 outputAmount,
+    uint64 deadline
+)
+    public
+    revertIfZero(outputAmount)
+    revertIfDeadlinePassed(deadline)
+    returns (uint256 inputAmount)
+{
+    uint256 inputReserves = inputToken.balanceOf(address(this));
+    uint256 outputReserves = outputToken.balanceOf(address(this));
+
+    inputAmount = getInputAmountBasedOnOutput(outputAmount, inputReserves, outputReserves);
+
++   if (inputAmount > maxInputAmount) {
++       revert TSwapPool__OutputTooHigh(inputAmount, maxInputAmount);
++   }
+
+    _swapAndVerify(
+        inputToken,
+        inputAmount,
+        outputToken,
+        outputAmount
+    );
+}
 ```
 
 ## Low
