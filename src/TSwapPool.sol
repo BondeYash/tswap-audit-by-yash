@@ -261,7 +261,7 @@ contract TSwapPool is ERC20 {
             revert TSwapPool__OutputTooLow(outputAmount, minOutputAmount);
         }
 
-        _swapAndVerify(
+        _swap(
             inputToken,
             inputAmount,
             outputToken,
@@ -285,7 +285,7 @@ contract TSwapPool is ERC20 {
 
         inputAmount = getInputAmountBasedOnOutput(outputAmount, inputReserves, outputReserves);
 
-        _swapAndVerify(
+        _swap(
             inputToken,
             inputAmount,
             outputToken,
@@ -315,7 +315,7 @@ contract TSwapPool is ERC20 {
      * @param outputToken ERC20 token to send to caller
      * @param outputAmount Amount of tokens to send to caller
      */
-    function _swapAndVerify(
+    function _swap(
         IERC20 inputToken,
         uint256 inputAmount,
         IERC20 outputToken,

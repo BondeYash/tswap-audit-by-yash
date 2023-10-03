@@ -267,7 +267,7 @@ function swapExactOutput(
 +       revert TSwapPool__OutputTooHigh(inputAmount, maxInputAmount);
 +   }
 
-    _swapAndVerify(
+    _swap(
         inputToken,
         inputAmount,
         outputToken,
