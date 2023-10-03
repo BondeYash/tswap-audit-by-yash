@@ -105,7 +105,7 @@ TSWAP is an constant-product AMM that allows users permissionlessly trade WETH a
 
 | Severity | Number of issues found |
 | -------- | ---------------------- |
-| High     | 2                      |
+| High     | 3                      |
 | Medium   | 2                      |
 | Low      | 2                      |
 | Info     | 0                      |
@@ -122,22 +122,31 @@ The `sellPoolTokens` is intended to allow users easily sell pool tokens and rece
 
 This is due to the fact that the `swapExactOutput` function is called, whereas the `swapExactInput` is the one that should be called. Because users specify the exact amount of input tokens - not output tokens.
 
-Consider making the following change to the `sellPoolTokens` function:
+Consider changing the implementation to use the `swapExactInput` function. Note that this would also require to change the `sellPoolTokens` function to accept a new parameter (e.g., `minWethToReceive`) to be passed down to `swapExactInput`.
 
 ```diff
-    function sellPoolTokens(uint256 poolTokenAmount) external returns (uint256 wethAmount) {
+    function sellPoolTokens(
+        uint256 poolTokenAmount
++       uint256 minWethToReceive
+    ) external returns (uint256 wethAmount) {
 -       return swapExactOutput(
 +       return swapExactInput(
             i_poolToken,
             poolTokenAmount,
             WETH_TOKEN,
-            0,
++           minWethToReceive,
             uint64(block.timestamp)
         );
     }
 ```
 
-### [H-2] Flawed invariant calculation may allow stealing funds
+### [H-2] Protocol may take too many tokens from users during swap
+
+A flaw in `getInputAmountBasedOnOutput`, where 10000 should be 1000. This miscalulates amount of tokens to be deposited by user. Combined with the lack of slippage protection, this would put users at risk of having their funds taken by liquidity providers.
+
+### [H-3] Lack of slippage protection in `swapExactOutput` function
+
+Does not include nor check a `maxInputAmount` parameter.
 
 ## Medium
 

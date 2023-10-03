@@ -46,7 +46,6 @@ contract TSwapPoolHandler is Test {
 
         pool.swapExactOutput({
             inputToken: poolToken,
-            maxInputAmount: type(uint256).max,
             outputToken: weth,
             outputAmount: wethAmount,
             deadline: deadline

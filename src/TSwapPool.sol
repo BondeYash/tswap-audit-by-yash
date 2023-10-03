@@ -22,11 +22,9 @@ contract TSwapPool is ERC20 {
     error TSwapPool__MaxPoolTokenDepositTooHigh(uint256 maximumPoolTokensToDeposit, uint256 poolTokensToDeposit);
     error TSwapPool__MinLiquidityTokensToMintTooLow(uint256 minimumLiquidityTokensToMint, uint256 liquidityTokensToMint);
     error TSwapPool__WethDepositAmountTooLow(uint256 minimumWethDeposit, uint256 wethToDeposit);
-    error TSwapPool__UnknownToken();
+    error TSwapPool__InvalidToken();
     error TSwapPool__OutputTooLow(uint256 actual, uint256 min);
-    error TSwapPool__InputTooHigh(uint256 actuak, uint256 max);
     error TSwapPool__MustBeMoreThanZero();
-    error TSwapPool__InvariantFailed();
 
     using SafeERC20 for IERC20;
 
@@ -57,13 +55,6 @@ contract TSwapPool is ERC20 {
     modifier revertIfZero(uint256 amount) {
         if (amount == 0) {
             revert TSwapPool__MustBeMoreThanZero();
-        }
-        _;
-    }
-
-    modifier revertIfUnknown(IERC20 token) {
-        if(token != WETH_TOKEN && token != i_poolToken) {
-            revert TSwapPool__UnknownToken();
         }
         _;
     }
@@ -246,9 +237,7 @@ contract TSwapPool is ERC20 {
         revertIfZero(outputReserves)
         returns (uint256 inputAmount)
     {
-        uint256 numerator = inputReserves * outputAmount * 1000;
-        uint256 denominator = (outputReserves - outputAmount) * 997;
-        return numerator / denominator;
+        return (inputReserves * outputAmount * 10000) / ((outputReserves - outputAmount) * 997);
     }
 
     function swapExactInput(
@@ -284,7 +273,6 @@ contract TSwapPool is ERC20 {
 
     function swapExactOutput(
         IERC20 inputToken,
-        uint256 maxInputAmount,
         IERC20 outputToken,
         uint256 outputAmount,
         uint64 deadline
@@ -298,10 +286,6 @@ contract TSwapPool is ERC20 {
         uint256 outputReserves = outputToken.balanceOf(address(this));
 
         inputAmount = getInputAmountBasedOnOutput(outputAmount, inputReserves, outputReserves);
-        
-        if (inputAmount > maxInputAmount) {
-            revert TSwapPool__InputTooHigh(inputAmount, maxInputAmount);
-        }
 
         _swapAndVerify(
             inputToken,
@@ -321,9 +305,8 @@ contract TSwapPool is ERC20 {
     function sellPoolTokens(uint256 poolTokenAmount) external returns (uint256 wethAmount) {
         return swapExactOutput(
             i_poolToken,
-            poolTokenAmount,
             WETH_TOKEN,
-            0,
+            poolTokenAmount,
             uint64(block.timestamp)
         );
     }
@@ -347,21 +330,22 @@ contract TSwapPool is ERC20 {
         uint256 outputAmount
     )
         private
-        revertIfUnknown(inputToken)
-        revertIfUnknown(outputToken)
     {
+        if (_isUnknown(inputToken) || _isUnknown(outputToken) || inputToken == outputToken) {
+            revert TSwapPool__InvalidToken();
+        }
+
         emit Swap(msg.sender, inputToken, inputAmount, outputToken, outputAmount);
 
         inputToken.safeTransferFrom(msg.sender, address(this), inputAmount);
         outputToken.safeTransfer(msg.sender, outputAmount);
+    }
 
-        uint256 inputBalance = inputToken.balanceOf(address(this));
-        uint256 outputBalance = outputToken.balanceOf(address(this));
-
-        uint256 inputBalanceAdjusted = inputBalance * 10000 - inputAmount * 3;
-        if (inputBalanceAdjusted * outputBalance * 10000 < inputReserves * outputReserves * 1000**2) {
-            revert TSwapPool__InvariantFailed();
+    function _isUnknown(IERC20 token) private view returns (bool) {
+        if (token != WETH_TOKEN && token != i_poolToken) {
+            return true;
         }
+        return false;
     }
 
     /*//////////////////////////////////////////////////////////////
