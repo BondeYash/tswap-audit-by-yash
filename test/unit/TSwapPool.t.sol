@@ -11,8 +11,8 @@ contract TSwapPoolTest is Test {
     ERC20Mock poolToken;
     ERC20Mock weth;
 
-    address liquidityProvider = address(1);
-    address user = address(2);
+    address liquidityProvider = makeAddr("liquidityProvider");
+    address user = makeAddr("user");
 
     function setUp() public {
         poolToken = new ERC20Mock();

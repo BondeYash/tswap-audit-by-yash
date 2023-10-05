@@ -12,7 +12,7 @@ contract TSwapPoolHandler is Test {
 
     int256 public deltaX;
 
-    address liquidityProvider = address(123);
+    address liquidityProvider = makeAddr("liquidityProvider");
     uint256 DEFAULT_LIQUIDITY_AMOUNT = 10e18;
 
     constructor(TSwapPool _pool) {
