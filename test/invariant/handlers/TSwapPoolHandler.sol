@@ -13,6 +13,7 @@ contract TSwapPoolHandler is Test {
     int256 public deltaX;
 
     address liquidityProvider = makeAddr("liquidityProvider");
+    address user = makeAddr("user");
     uint256 DEFAULT_LIQUIDITY_AMOUNT = 10e18;
 
     constructor(TSwapPool _pool) {
@@ -27,7 +28,7 @@ contract TSwapPoolHandler is Test {
     // We should have the lower bound be 1
     // upper bound not be too high
 
-    function swapPoolTokenForWethBasedOnOutputWeth(uint256 wethAmount) public {
+    function swapPoolTokenForWethBasedOnOutputWeth(uint256 outputWethAmount) public {
         int256 startingPoolTokenBalance = int256(poolToken.balanceOf(address(pool)));
         int256 startingWethBalance = int256(weth.balanceOf(address(pool)));
 
@@ -35,33 +36,48 @@ contract TSwapPoolHandler is Test {
             return;
         }
 
-        wethAmount = bound(wethAmount, pool.getMinimumWethDepositAmount(), weth.balanceOf(address(pool)));
-        uint64 deadline = uint64(block.timestamp);
-        uint256 poolTokenAmount =
-            pool.getInputAmountBasedOnOutput(wethAmount, poolToken.balanceOf(address(pool)), weth.balanceOf(address(pool)));
-        if (poolToken.balanceOf(address(this)) < poolTokenAmount) {
-            poolToken.mint(address(this), poolTokenAmount - poolToken.balanceOf(address(this)) + 1);
+        outputWethAmount = bound(outputWethAmount, pool.getMinimumWethDepositAmount(), weth.balanceOf(address(pool)));
+
+        uint256 poolTokenAmount = pool.getInputAmountBasedOnOutput(
+            outputWethAmount, // outputAmount
+            poolToken.balanceOf(address(pool)), // inputReserves
+            weth.balanceOf(address(pool)) // outputReserves
+        );
+        
+        // Mint any necessary amount of pool tokens
+        if (poolToken.balanceOf(user) < poolTokenAmount) {
+            poolToken.mint(user, poolTokenAmount - poolToken.balanceOf(user) + 1);
         }
+
+        vm.startPrank(user);
+        // Approve tokens so they can be pulled by the pool during the swap
         poolToken.approve(address(pool), type(uint256).max);
 
+        // Execute swap, giving pool tokens, receiving WETH
         pool.swapExactOutput({
             inputToken: poolToken,
             outputToken: weth,
-            outputAmount: wethAmount,
-            deadline: deadline
+            outputAmount: outputWethAmount,
+            deadline: uint64(block.timestamp)
         });
+        vm.stopPrank();
 
+        // Query balances in pool after the swap
         uint256 endingPoolTokenBalance = poolToken.balanceOf(address(pool));
         uint256 endingWethBalance = weth.balanceOf(address(pool));
 
         // sell tokens == x == poolTokens
-        int256 deltaPoolToken = int256(endingPoolTokenBalance) - int256(startingPoolTokenBalance);
+        int256 actualDeltaPoolToken = int256(endingPoolTokenBalance) - int256(startingPoolTokenBalance);
         int256 deltaWeth = int256(endingWethBalance) - int256(startingWethBalance);
         int256 one = int256(1000);
         int256 fee = int256(3);
-        int256 calculatedDeltaPoolToken = (deltaWeth / startingWethBalance) / (one - (deltaWeth / startingWethBalance))
+
+        // Calculate the expected delta of pool tokens
+        int256 expectedDeltaPoolToken = (deltaWeth / startingWethBalance) / (one - (deltaWeth / startingWethBalance))
             * (one / (one - fee)) * startingPoolTokenBalance;
-        deltaX = calculatedDeltaPoolToken - deltaPoolToken; // should be 0
+
+        // If everything is working ok, the difference between expected and actual (`deltaX`) should always be 0 
+        deltaX = expectedDeltaPoolToken - actualDeltaPoolToken;
     }
 
     function deposit(uint256 liquidityAmount) public {
@@ -75,15 +91,20 @@ contract TSwapPoolHandler is Test {
             return;
         }
         uint256 wethTopUpAmount = type(uint64).max - weth.balanceOf(liquidityProvider);
-        uint256 tokenTopUpAmount = type(uint64).max - poolToken.balanceOf(liquidityProvider);
+        uint256 poolTokenTopUpAmount = type(uint64).max - poolToken.balanceOf(liquidityProvider);
 
         weth.mint(liquidityProvider, wethTopUpAmount);
-        poolToken.mint(liquidityProvider, tokenTopUpAmount);
+        poolToken.mint(liquidityProvider, poolTokenTopUpAmount);
 
         weth.approve(address(pool), type(uint256).max);
         poolToken.approve(address(pool), type(uint256).max);
 
-        pool.deposit(liquidityAmount, 0, type(uint64).max, uint64(block.timestamp));
+        pool.deposit({
+            wethToDeposit: liquidityAmount,
+            minimumLiquidityTokensToMint: 0,
+            maximumPoolTokensToDeposit: type(uint64).max,
+            deadline: uint64(block.timestamp)
+        });
         vm.stopPrank();
     }
 }
