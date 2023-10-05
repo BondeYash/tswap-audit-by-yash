@@ -53,8 +53,15 @@ Assisting Auditors:
   - [Issues found](#issues-found)
 - [Findings](#findings)
   - [High](#high)
-    - [\[H-1\] `swapPoolTokenForWethBasedOnInputPoolToken` calculates `wethBought` backwards](#h-1-swappooltokenforwethbasedoninputpooltoken-calculates-wethbought-backwards)
+    - [\[H-1\] The `sellPoolTokens` function miscalculates amount of tokens bought](#h-1-the-sellPoolTokens-function-miscalculates-amount-of-tokens-bought)
+    - [\[H-2\] Protocol may take too many tokens from users during swap](#h-2-protocol-may-take-too-many-tokens-from-users-during-swap)
+  - [Medium](#medium)
     - [\[M-1\] Rebase, fee-on-transfer, and centralized ERC20s can break core invariant](#m-1-rebase-fee-on-transfer-and-centralized-erc20s-can-break-core-invariant)
+    - [\[M-2\] Missing deadline check when adding liquidity](#m-2-missing-deadline-check-when-adding-liquidity)
+    - [\[M-3\] Lack of slippage protection in `swapExactOutput` function](#m-3-lack-of-slippage-protection-in-swapexactoutput-function)
+  - [Low](#low)
+    - [\[L-1\] Wrong values logged in `LiquidityAdded` event](#l-1-wrong-values-logged-in-LiquidityAdded-event)
+    - [\[L-2\] Swapping function returns default value](#l-2-swapping-function-returns-default-value)
 </details>
 </br>
 
@@ -292,4 +299,3 @@ When the `LiquidityAdded` event is emitted in the `_addLiquidityMintAndTransfer`
 The `swapExactInput` function is expected to return the actual amount of tokens bought by the caller. However, while it declares the named return value `output`, it never assigns a value to it, nor uses an explicit `return` statement.
 
 As a result, the function will always return zero. Consider modifying the function so that it always return the correct amount of tokens bought by the caller.
-
