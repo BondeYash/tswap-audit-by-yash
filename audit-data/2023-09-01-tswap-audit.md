@@ -62,6 +62,8 @@ Assisting Auditors:
   - [Low](#low)
     - [\[L-1\] Wrong values logged in `LiquidityAdded` event](#l-1-wrong-values-logged-in-LiquidityAdded-event)
     - [\[L-2\] Swapping function returns default value](#l-2-swapping-function-returns-default-value)
+  - [Informational](#informational)
+    - [\[I-1\] Poor test coverage](#i-1-poor-test-coverage)
 </details>
 </br>
 
@@ -86,7 +88,7 @@ The YOUR_NAME_HERE team makes all effort to find as many vulnerabilities in the 
 
 **The findings described in this document correspond the following commit hash:**
 ```
-026da6e73fde0dd0a650d623d0411547e3188909
+1ec3c30253423eb4199827f59cf564cc575b46db
 ```
 
 ## Scope 
@@ -299,3 +301,17 @@ When the `LiquidityAdded` event is emitted in the `_addLiquidityMintAndTransfer`
 The `swapExactInput` function is expected to return the actual amount of tokens bought by the caller. However, while it declares the named return value `output`, it never assigns a value to it, nor uses an explicit `return` statement.
 
 As a result, the function will always return zero. Consider modifying the function so that it always return the correct amount of tokens bought by the caller.
+
+## Informational 
+
+### [I-1] Poor test coverage 
+
+```
+Running tests...
+| File                                         | % Lines         | % Statements    | % Branches    | % Funcs       |
+|----------------------------------------------|-----------------|-----------------|---------------|---------------|
+| src/PoolFactory.sol                          | 100.00% (11/11) | 100.00% (16/16) | 100.00% (2/2) | 100.00% (3/3) |
+| src/TSwapPool.sol                            | 54.84% (34/62)  | 59.14% (55/93)  | 33.33% (6/18) | 37.50% (6/16) |
+```
+
+**Recommended Mitigation:** Aim to get test coverage up to over 90% for all files.
