@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { Test, StdInvariant, console } from "forge-std/Test.sol";
 import { PoolFactory } from "../../src/PoolFactory.sol";
 import { TSwapPool } from "../../src/TSwapPool.sol";
-import { ERC20Mock } from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
+import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 import { TSwapPoolHandler } from "./handlers/TSwapPoolHandler.sol";
 
 contract Invariant is StdInvariant, Test {
