@@ -57,12 +57,12 @@ forge coverage --report debug
 
 # Audit Scope Details
 
-- Commit Hash: XXX
+- Commit Hash: 1ec3c30253423eb4199827f59cf564cc575b46db
 - In Scope:
 ```
 ./src/
 ├── PoolFactory.sol
 └── TSwapPool.sol
 ```
-- Solc Version: 0.8.18
+- Solc Version: 0.8.20
 - Chain(s) to deploy contract to: Ethereum

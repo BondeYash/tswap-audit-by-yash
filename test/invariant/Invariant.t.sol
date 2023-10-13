@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.18;
+pragma solidity 0.8.20;
 
 import { Test, StdInvariant, console } from "forge-std/Test.sol";
 import { PoolFactory } from "../../src/PoolFactory.sol";
 import { TSwapPool } from "../../src/TSwapPool.sol";
-import { ERC20Mock } from "@openzeppelin/contracts/mocks/ERC20Mock.sol";
+import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 import { TSwapPoolHandler } from "./handlers/TSwapPoolHandler.sol";
 
 contract Invariant is StdInvariant, Test {
@@ -20,14 +20,15 @@ contract Invariant is StdInvariant, Test {
         factory = new PoolFactory();
         tokenA = new ERC20Mock();
         pool = TSwapPool(factory.createPool(address(tokenA)));
+
         // Overright the WETH address
         deployCodeTo("ERC20Mock.sol:ERC20Mock", address(pool.WETH_TOKEN()));
 
         handler = new TSwapPoolHandler(pool);
 
         bytes4[] memory selectors = new bytes4[](2);
-        selectors[0] = TSwapPoolHandler.swapPoolTokenForWethBasedOnOutputWeth.selector;
-        selectors[1] = TSwapPoolHandler.deposit.selector;
+        selectors[0] = TSwapPoolHandler.deposit.selector;
+        selectors[1] = TSwapPoolHandler.swapPoolTokenForWethBasedOnOutputWeth.selector;
 
         targetSelector(FuzzSelector({ addr: address(handler), selectors: selectors }));
         targetContract(address(handler));
