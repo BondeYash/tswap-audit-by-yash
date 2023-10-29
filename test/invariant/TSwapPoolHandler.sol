@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { Test, console } from "forge-std/Test.sol";
-import { TSwapPool } from "../../../src/TSwapPool.sol";
+import { TSwapPool } from "../../src/TSwapPool.sol";
 import { ERC20Mock } from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 
 contract TSwapPoolHandler is Test {
@@ -23,27 +23,30 @@ contract TSwapPoolHandler is Test {
         poolToken = ERC20Mock(address(pool.getPoolToken()));
     }
 
-    // get all methods with
-    // forge inspect TSwapPool methods
-
-    // We should have the lower bound be 1
-    // upper bound not be too high
-
-    function swapPoolTokenForWethBasedOnOutputWeth(uint256 outputWethAmount) public {
-        int256 startingPoolTokenBalance = int256(poolToken.balanceOf(address(pool)));
-        int256 startingWethBalance = int256(weth.balanceOf(address(pool)));
-
+    function swapPoolTokenForWethBasedOnOutputWeth(uint256 outputWethAmount) public updateDeltas {
         if (weth.balanceOf(address(pool)) <= pool.getMinimumWethDepositAmount()) {
             return;
         }
 
         outputWethAmount = bound(outputWethAmount, pool.getMinimumWethDepositAmount(), weth.balanceOf(address(pool)));
+        // 1000000001 ETH
+
+        // Current WETH: 50.000000000000000000
+        // Current POOL: 100.000000000000000000
 
         uint256 poolTokenAmount = pool.getInputAmountBasedOnOutput(
             outputWethAmount, // outputAmount
             poolToken.balanceOf(address(pool)), // inputReserves
             weth.balanceOf(address(pool)) // outputReserves
         );
+
+        // It's saying we should swap
+        // 2006018056 Pool Tokens
+        // for
+        // 1000000001 WETH tokens
+        // which is ~2:1, which is correct
+        // deltaX = -1000000001
+        // deltaY = +2006018056
 
         // Mint any necessary amount of pool tokens
         if (poolToken.balanceOf(user) < poolTokenAmount) {
@@ -62,26 +65,9 @@ contract TSwapPoolHandler is Test {
             deadline: uint64(block.timestamp)
         });
         vm.stopPrank();
-
-        // Query balances in pool after the swap
-        uint256 endingPoolTokenBalance = poolToken.balanceOf(address(pool));
-        uint256 endingWethBalance = weth.balanceOf(address(pool));
-
-        // sell tokens == x == poolTokens
-        int256 actualDeltaPoolToken = int256(endingPoolTokenBalance) - int256(startingPoolTokenBalance);
-        int256 deltaWeth = int256(endingWethBalance) - int256(startingWethBalance);
-        int256 one = int256(1000);
-        int256 fee = int256(3);
-
-        // Calculate the expected delta of pool tokens
-        int256 expectedDeltaPoolToken = (deltaWeth / startingWethBalance) / (one - (deltaWeth / startingWethBalance))
-            * (one / (one - fee)) * startingPoolTokenBalance;
-
-        // If everything is working ok, the difference between expected and actual (`deltaX`) should always be 0
-        deltaX = expectedDeltaPoolToken - actualDeltaPoolToken;
     }
 
-    function deposit(uint256 liquidityAmount) public {
+    function deposit(uint256 liquidityAmount) public updateDeltas {
         liquidityAmount = bound(liquidityAmount, pool.getMinimumWethDepositAmount(), type(uint64).max);
 
         vm.startPrank(liquidityProvider);
@@ -107,5 +93,22 @@ contract TSwapPoolHandler is Test {
             deadline: uint64(block.timestamp)
         });
         vm.stopPrank();
+    }
+
+    modifier updateDeltas() {
+        int256 startingPoolTokenBalance = int256(poolToken.balanceOf(address(pool)));
+        int256 startingWethBalance = int256(weth.balanceOf(address(pool)));
+
+        _;
+
+        uint256 endingPoolTokenBalance = poolToken.balanceOf(address(pool));
+        uint256 endingWethBalance = weth.balanceOf(address(pool));
+
+        // sell tokens == x == poolTokens
+        int256 actualDeltaPoolToken = int256(endingPoolTokenBalance) - int256(startingPoolTokenBalance);
+        int256 deltaWeth = int256(endingWethBalance) - int256(startingWethBalance);
+
+        actualDeltaX = actualDeltaX + deltaWeth;
+        actualDeltaY = actualDeltaY + actualDeltaPoolToken;
     }
 }

@@ -237,7 +237,8 @@ contract TSwapPool is ERC20 {
         revertIfZero(outputReserves)
         returns (uint256 inputAmount)
     {
-        return (inputReserves * outputAmount * 10000) / ((outputReserves - outputAmount) * 997);
+        // return (inputReserves * outputAmount * 10000) / ((outputReserves - outputAmount) * 997);
+        return (inputReserves * outputAmount * 1000) / ((outputReserves - outputAmount) * 997);
     }
 
     function swapExactInput(
@@ -261,12 +262,7 @@ contract TSwapPool is ERC20 {
             revert TSwapPool__OutputTooLow(outputAmount, minOutputAmount);
         }
 
-        _swap(
-            inputToken,
-            inputAmount,
-            outputToken,
-            outputAmount
-        );
+        _swap(inputToken, inputAmount, outputToken, outputAmount);
     }
 
     function swapExactOutput(
@@ -285,12 +281,7 @@ contract TSwapPool is ERC20 {
 
         inputAmount = getInputAmountBasedOnOutput(outputAmount, inputReserves, outputReserves);
 
-        _swap(
-            inputToken,
-            inputAmount,
-            outputToken,
-            outputAmount
-        );
+        _swap(inputToken, inputAmount, outputToken, outputAmount);
     }
 
     /**
@@ -299,12 +290,7 @@ contract TSwapPool is ERC20 {
      * @return wethAmount amount of WETH received by caller
      */
     function sellPoolTokens(uint256 poolTokenAmount) external returns (uint256 wethAmount) {
-        return swapExactOutput(
-            i_poolToken,
-            WETH_TOKEN,
-            poolTokenAmount,
-            uint64(block.timestamp)
-        );
+        return swapExactOutput(i_poolToken, WETH_TOKEN, poolTokenAmount, uint64(block.timestamp));
     }
 
     /**
@@ -315,14 +301,7 @@ contract TSwapPool is ERC20 {
      * @param outputToken ERC20 token to send to caller
      * @param outputAmount Amount of tokens to send to caller
      */
-    function _swap(
-        IERC20 inputToken,
-        uint256 inputAmount,
-        IERC20 outputToken,
-        uint256 outputAmount
-    )
-        private
-    {
+    function _swap(IERC20 inputToken, uint256 inputAmount, IERC20 outputToken, uint256 outputAmount) private {
         if (_isUnknown(inputToken) || _isUnknown(outputToken) || inputToken == outputToken) {
             revert TSwapPool__InvalidToken();
         }
