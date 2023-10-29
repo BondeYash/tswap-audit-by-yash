@@ -53,14 +53,14 @@ Assisting Auditors:
   - [Issues found](#issues-found)
 - [Findings](#findings)
   - [High](#high)
-    - [\[H-1\] The `sellPoolTokens` function miscalculates amount of tokens bought](#h-1-the-sellPoolTokens-function-miscalculates-amount-of-tokens-bought)
-    - [\[H-2\] Protocol may take too many tokens from users during swap](#h-2-protocol-may-take-too-many-tokens-from-users-during-swap)
+    - [\[H-1\] The `sellPoolTokens` function miscalculates amount of tokens bought](#h-1-the-sellpooltokens-function-miscalculates-amount-of-tokens-bought)
+    - [\[H-2\] Protocol may take too many tokens from users during swap, resulting is lost fee](#h-2-protocol-may-take-too-many-tokens-from-users-during-swap-resulting-is-lost-fee)
   - [Medium](#medium)
-    - [\[M-1\] Rebase, fee-on-transfer, and centralized ERC20s can break core invariant](#m-1-rebase-fee-on-transfer-and-centralized-erc20s-can-break-core-invariant)
+    - [\[M-1\] Rebase, fee-on-transfer, ERC777, and centralized ERC20s can break core invariant](#m-1-rebase-fee-on-transfer-erc777-and-centralized-erc20s-can-break-core-invariant)
     - [\[M-2\] Missing deadline check when adding liquidity](#m-2-missing-deadline-check-when-adding-liquidity)
     - [\[M-3\] Lack of slippage protection in `swapExactOutput` function](#m-3-lack-of-slippage-protection-in-swapexactoutput-function)
   - [Low](#low)
-    - [\[L-1\] Wrong values logged in `LiquidityAdded` event](#l-1-wrong-values-logged-in-LiquidityAdded-event)
+    - [\[L-1\] Wrong values logged in `LiquidityAdded` event](#l-1-wrong-values-logged-in-liquidityadded-event)
     - [\[L-2\] Swapping function returns default value](#l-2-swapping-function-returns-default-value)
   - [Informational](#informational)
     - [\[I-1\] Poor test coverage](#i-1-poor-test-coverage)
@@ -149,7 +149,7 @@ Consider changing the implementation to use the `swapExactInput` function. Note 
     }
 ```
 
-### [H-2] Protocol may take too many tokens from users during swap
+### [H-2] Protocol may take too many tokens from users during swap, resulting is lost fee
 
 The `getInputAmountBasedOnOutput` function is intended to calculate the amount of tokens a user should deposit given an amount of output tokens. However, the function currently miscalculates the resulting amount. When calculating the fee, it scales the amount by 10000 instead of 1000.
 
@@ -228,7 +228,17 @@ function testFlawedSwapExactOutput() public {
 
 ## Medium
 
-### [M-1] Rebase, fee-on-transfer, and centralized ERC20s can break core invariant 
+### [M-1] Rebase, fee-on-transfer, ERC777, and centralized ERC20s can break core invariant 
+
+**Description:** The core invariant of the protocol is:
+
+`x * y = k`. In practice though, the protocol takes fees and actually increases k. So we need to make sure `x * y = k` before fees are applied. 
+
+**Impact:** 
+
+**Proof of Concept:**
+
+**Recommended Mitigation:** 
 
 ### [M-2] Missing deadline check when adding liquidity
 
@@ -308,10 +318,10 @@ As a result, the function will always return zero. Consider modifying the functi
 
 ```
 Running tests...
-| File                                         | % Lines         | % Statements    | % Branches    | % Funcs       |
-|----------------------------------------------|-----------------|-----------------|---------------|---------------|
-| src/PoolFactory.sol                          | 100.00% (11/11) | 100.00% (16/16) | 100.00% (2/2) | 100.00% (3/3) |
-| src/TSwapPool.sol                            | 54.84% (34/62)  | 59.14% (55/93)  | 33.33% (6/18) | 37.50% (6/16) |
+| File                | % Lines         | % Statements    | % Branches    | % Funcs       |
+| ------------------- | --------------- | --------------- | ------------- | ------------- |
+| src/PoolFactory.sol | 100.00% (11/11) | 100.00% (16/16) | 100.00% (2/2) | 100.00% (3/3) |
+| src/TSwapPool.sol   | 54.84% (34/62)  | 59.14% (55/93)  | 33.33% (6/18) | 37.50% (6/16) |
 ```
 
 **Recommended Mitigation:** Aim to get test coverage up to over 90% for all files.

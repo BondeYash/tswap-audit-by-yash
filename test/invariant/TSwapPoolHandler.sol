@@ -10,11 +10,12 @@ contract TSwapPoolHandler is Test {
     ERC20Mock weth;
     ERC20Mock poolToken;
 
-    int256 public deltaX;
-
     address liquidityProvider = makeAddr("liquidityProvider");
     address user = makeAddr("user");
-    uint256 DEFAULT_LIQUIDITY_AMOUNT = 10e18;
+
+    // Our Ghost variables
+    int256 public actualDeltaY;
+    int256 public actualDeltaX;
 
     constructor(TSwapPool _pool) {
         pool = _pool;
@@ -43,7 +44,7 @@ contract TSwapPoolHandler is Test {
             poolToken.balanceOf(address(pool)), // inputReserves
             weth.balanceOf(address(pool)) // outputReserves
         );
-        
+
         // Mint any necessary amount of pool tokens
         if (poolToken.balanceOf(user) < poolTokenAmount) {
             poolToken.mint(user, poolTokenAmount - poolToken.balanceOf(user) + 1);
@@ -76,7 +77,7 @@ contract TSwapPoolHandler is Test {
         int256 expectedDeltaPoolToken = (deltaWeth / startingWethBalance) / (one - (deltaWeth / startingWethBalance))
             * (one / (one - fee)) * startingPoolTokenBalance;
 
-        // If everything is working ok, the difference between expected and actual (`deltaX`) should always be 0 
+        // If everything is working ok, the difference between expected and actual (`deltaX`) should always be 0
         deltaX = expectedDeltaPoolToken - actualDeltaPoolToken;
     }
 

@@ -1,0 +1,21 @@
+PoolFactory.s_pools (src/PoolFactory.sol#27) is never initialized. It is used in:
+        - PoolFactory.createPool(address) (src/PoolFactory.sol#42-53)
+        - PoolFactory.getPool(address) (src/PoolFactory.sol#59-61)
+PoolFactory.s_tokens (src/PoolFactory.sol#28) is never initialized. It is used in:
+        - PoolFactory.getToken(address) (src/PoolFactory.sol#63-65)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-state-variables
+INFO:Detectors:
+Different versions of Solidity are used:
+        - Version used: ['0.8.20', '>=0.6.2', '^0.8.20']
+        - 0.8.20 (src/PoolFactory.sol#15)
+        - 0.8.20 (src/TSwapPool.sol#15)
+        - >=0.6.2 (lib/forge-std/src/interfaces/IERC20.sol#2)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/interfaces/draft-IERC6093.sol#3)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol#4)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol#4)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Metadata.sol#4)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/extensions/IERC20Permit.sol#4)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol#4)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Address.sol#4)
+        - ^0.8.20 (lib/openzeppelin-contracts/contracts/utils/Context.sol#4)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#different-pragma-directives-are-used

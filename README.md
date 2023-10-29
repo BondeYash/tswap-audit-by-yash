@@ -1,4 +1,14 @@
+<p align="center">
+<img src="./images/t-swap-youtube-dimensions.png" width="400" alt="t-swap">
+<br/>
+
 # TSwap 
+
+This project is meant to be a permissionless way for users to swap assets between each other at a fair price. You can think of T-Swap as a decentralized asset/token exchange (DEX). 
+
+T-Swap is known as an [Automated Market Maker (AMM)](https://chain.link/education-hub/what-is-an-automated-market-maker-amm) because it doesn't use a normal "order book" style exchange, instead it uses "Pools" of an asset. 
+
+- [Uniswap Explained](https://www.youtube.com/watch?v=DLu35sIqVTM)
 
 *This codebase is based loosely on [Uniswap v1](https://github.com/Uniswap/v1-contracts/tree/master)*
 
