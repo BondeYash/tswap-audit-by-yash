@@ -35,6 +35,4 @@ scopefile :; @tree ./src/ | sed 's/└/#/g' | awk -F '── ' '!/\.sol$$/ { pat
 
 slither :; slither . --config-file slither.config.json 
 
-aderyn :; aderyn --root .
-
-invar :; forge test --mt invariant_testConstantProduct -vvvvv --fuzz-seed 1
+aderyn :; aderyn .
