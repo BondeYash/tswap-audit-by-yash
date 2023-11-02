@@ -298,7 +298,6 @@ contract TSwapPool is ERC20 {
 
     /**
      * @notice Swaps a given amount of input for a given amount of output tokens.
-     * @dev Checks core invariant of the contract. Beware of modifying this function.
      * @dev Every 10 swaps, we give the caller an extra token as an extra incentive to keep trading on T-Swap.
      * @param inputToken ERC20 token to pull from caller
      * @param inputAmount Amount of tokens to pull from caller

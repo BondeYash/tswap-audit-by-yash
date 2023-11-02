@@ -146,7 +146,7 @@ forge coverage --report debug
 
 # Audit Scope Details
 
-- Commit Hash: 1ec3c30253423eb4199827f59cf564cc575b46db
+- Commit Hash: e643a8d4c2c802490976b538dd009b351b1c8dda
 - In Scope:
 ```
 ./src/
@@ -155,6 +155,8 @@ forge coverage --report debug
 ```
 - Solc Version: 0.8.20
 - Chain(s) to deploy contract to: Ethereum
+- Tokens:
+  - Any ERC20 token
 
 ## Actors / Roles
 - Liquidity Providers: Users who have liquidity deposited into the pools. Their shares are represented by the LP ERC20 tokens. They gain a 0.3% fee every time a swap is made. 
